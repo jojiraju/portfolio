@@ -20,6 +20,31 @@ export default function Portfolio() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [clicks, setClicks] = useState([]);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseDown = (e) => {
+      const id = Date.now();
+      const newClick = { id, x: e.clientX, y: e.clientY };
+      setClicks(prev => [...prev, newClick]);
+      setTimeout(() => {
+        setClicks(prev => prev.filter(c => c.id !== id));
+      }, 1000);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, []);
   
   const fadeUpVariant = {
     hidden: { opacity: 0, y: 40 },
@@ -38,56 +63,183 @@ export default function Portfolio() {
 
   const hoverEffect = {
     hover: { 
-      y: -8, 
-      boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(59, 130, 246, 0.1)', 
-      borderColor: 'rgba(59, 130, 246, 0.3)',
-      transition: { duration: 0.3, ease: [0.175, 0.885, 0.32, 1.275] }
+      y: -10, 
+      scale: 1.02,
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 50px rgba(59, 130, 246, 0.3)', 
+      borderColor: 'var(--accent-primary)',
+      transition: { duration: 0.4, ease: "easeOut" }
     }
   };
 
   return (
     <>
       <div className="animated-bg"></div>
+
+      {/* Interactive Dot Grid Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -2,
+        overflow: 'hidden',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '40px',
+        padding: '40px',
+        justifyContent: 'center',
+        alignContent: 'center',
+        pointerEvents: 'none',
+        opacity: 0.15
+      }}>
+        {[...Array(200)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              x: (mousePos.x - 800) * 0.02,
+              y: (mousePos.y - 400) * 0.02,
+            }}
+            transition={{ type: "spring", damping: 25, stiffness: 120 }}
+            style={{
+              width: '4px',
+              height: '4px',
+              borderRadius: '50%',
+              background: 'var(--text-secondary)',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.2)',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Interactive Spotlight */}
+      <motion.div
+        animate={{
+          x: mousePos.x - 250,
+          y: mousePos.y - 250,
+        }}
+        transition={{ type: "spring", damping: 30, stiffness: 200, mass: 0.5 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          zIndex: -1,
+          filter: 'blur(40px)',
+        }}
+      />
       
-      <nav style={{ padding: '20px 0', borderBottom: '1px solid var(--glass-border)', position: 'fixed', top: 0, width: '100%', zIndex: 100, backdropFilter: 'blur(10px)' }}>
+      {/* Particle Trail Effect */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="cursor-particle"
+          animate={{
+            x: mousePos.x,
+            y: mousePos.y,
+            scale: [1, 0.5, 0],
+            opacity: [0.6, 0.3, 0],
+          }}
+          transition={{
+            duration: 0.8,
+            ease: "easeOut",
+            delay: i * 0.05,
+          }}
+          style={{
+            position: 'fixed',
+            top: -10,
+            left: -10,
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: i % 2 === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)',
+            filter: 'blur(8px)',
+            pointerEvents: 'none',
+            zIndex: 9999,
+            mixBlendMode: 'screen',
+          }}
+        />
+      ))}
+
+      {/* Click Fire Burst Effect */}
+      {clicks.map(click => (
+        <div key={click.id} style={{ position: 'fixed', left: click.x, top: click.y, pointerEvents: 'none', zIndex: 10000 }}>
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+              animate={{ 
+                x: (Math.random() - 0.5) * 200, 
+                y: (Math.random() - 0.5) * 200, 
+                opacity: 0, 
+                scale: 0 
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{
+                position: 'absolute',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: i % 3 === 0 ? '#ff4d00' : (i % 3 === 1 ? '#3b82f6' : '#8b5cf6'),
+                filter: 'blur(2px)',
+                boxShadow: '0 0 10px #ff4d00',
+              }}
+            />
+          ))}
+        </div>
+      ))}
+      
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        style={{ padding: '20px 0', borderBottom: '1px solid var(--glass-border)', position: 'fixed', top: 0, width: '100%', zIndex: 100, backdropFilter: 'blur(10px)' }}
+      >
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+          <motion.h2 
+            whileHover={{ scale: 1.05 }}
+            style={{ fontSize: '1.5rem', fontWeight: 800, cursor: 'pointer' }}
+          >
             <span className="text-gradient">JV</span>.
-          </h2>
+          </motion.h2>
           <div style={{ display: 'flex', gap: '20px', color: 'var(--text-secondary)' }}>
-            <a href="#about" style={{ fontSize: '0.9rem', fontWeight: 500 }}>About</a>
-            <a href="#experience" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Experience</a>
-            <a href="#skills" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Skills</a>
+            <motion.a whileHover={{ color: 'var(--accent-primary)', y: -2 }} href="#about" style={{ fontSize: '0.9rem', fontWeight: 500 }}>About</motion.a>
+            <motion.a whileHover={{ color: 'var(--accent-primary)', y: -2 }} href="#experience" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Experience</motion.a>
+            <motion.a whileHover={{ color: 'var(--accent-primary)', y: -2 }} href="#skills" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Skills</motion.a>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       <main className="container" style={{ paddingTop: '120px', paddingBottom: '100px' }}>
         
         {/* Hero Section */}
         <section id="about" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '40px', flexWrap: 'wrap-reverse', marginBottom: '80px' }}>
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
             style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', flex: '1 1 500px' }}
           >
-            <div style={{ padding: '8px 16px', borderRadius: '20px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', width: 'fit-content', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <motion.div variants={fadeUpVariant} style={{ padding: '8px 16px', borderRadius: '20px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', width: 'fit-content', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 2s infinite' }}></span>
               Available for Freelance Opportunities
-            </div>
-            <h1 style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', lineHeight: 1.1 }}>
+            </motion.div>
+            <motion.h1 variants={fadeUpVariant} style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', lineHeight: 1.1 }}>
               Hi, I'm <br />
               <span className="text-gradient">Joji Raju Varghese</span>
-            </h1>
-            <h2 style={{ fontSize: '1.5rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+            </motion.h1>
+            <motion.h2 variants={fadeUpVariant} style={{ fontSize: '1.5rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
               Software Developer specializing in React & Next.js
-            </h2>
-            <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '600px', lineHeight: 1.8 }}>
+            </motion.h2>
+            <motion.p variants={fadeUpVariant} style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '600px', lineHeight: 1.8 }}>
               To work in a challenging environment that will expose me to new trends in the world of information technology and wish to get trained in an organization where I can get guidance and support to excel in computing.
-            </p>
+            </motion.p>
             
-            <div style={{ display: 'flex', gap: '16px', marginTop: '20px', flexWrap: 'wrap' }}>
+            <motion.div variants={fadeUpVariant} style={{ display: 'flex', gap: '16px', marginTop: '20px', flexWrap: 'wrap' }}>
               <motion.a 
                 href="mailto:jojirajuvarghese@gmail.com" 
                 className="glass-panel" 
@@ -105,13 +257,17 @@ export default function Portfolio() {
               >
                 +91 87999 29317
               </motion.div>
-            </div>
+            </motion.div>
           </motion.div>
           
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
+            transition={{ 
+              opacity: { duration: 0.8, ease: "easeOut", delay: 0.2 },
+              scale: { duration: 0.8, ease: "easeOut", delay: 0.2 },
+              y: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+            }}
             style={{ flex: '1 1 300px', display: 'flex', justifyContent: 'center' }}
           >
             <div style={{ 
@@ -299,7 +455,7 @@ export default function Portfolio() {
             Technical <span className="text-gradient">Skills</span>
           </motion.h3>
           <motion.div 
-            variants={fadeUpVariant}
+            variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
@@ -309,6 +465,7 @@ export default function Portfolio() {
             {['React JS', 'Next JS', 'Javascript', 'Typescript', 'C', 'C++', 'C#', 'HTML', 'CSS', 'SCSS', 'Bootstrap', 'Git'].map((skill, i) => (
               <motion.div 
                 key={i} 
+                variants={fadeUpVariant}
                 whileHover={{ y: -4, borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)' }}
                 transition={{ duration: 0.2 }}
                 style={{
@@ -384,9 +541,14 @@ export default function Portfolio() {
 
       </main>
 
-      <footer style={{ padding: '40px 0', borderTop: '1px solid var(--glass-border)', textAlign: 'center', color: 'var(--text-secondary)' }}>
+      <motion.footer 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+        style={{ padding: '40px 0', borderTop: '1px solid var(--glass-border)', textAlign: 'center', color: 'var(--text-secondary)' }}
+      >
         <p>© {new Date().getFullYear()} Joji Raju Varghese. All rights reserved.</p>
-      </footer>
+      </motion.footer>
 
       <AnimatePresence>
         {showScrollTop && (
